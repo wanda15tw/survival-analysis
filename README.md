@@ -175,6 +175,23 @@ plt.show()
 ![](https://i.imgur.com/yIc1vip.png)
 
 ### Poisson 
+Having explored hazard function, which shows unpredictable but extremely low failure rate, it is reasonable to assume the part's failure rate will converge to a constant (random failure in bathtub curve). With that constant failure rate - probability of failure in day, I can convert that to **Mean Time Between Failure (MTBF)** and **Annualized Failure Rate (AFR)**.
+
+```
+# ultimate failure rate
+fr = lnf.hazard_.iloc[-1, 0]
+MTBF_days = 1/fr
+MTBF_mons = round(MTBF_days / 30, 1)
+MTBF_yrs = round(MTBF_days / 365, 1)
+
+AFR = fr*365
+
+num_active_parts = 200000
+num_active_parts * AFR  # estimated number of failures per year out of 200K active parts
+```
+
+To fit in a possion distribution, I only need one independent variable. That is average failure rate, and I use AFR multiplied by number of active part base. 
+
 
 ```
 from scipy.stats import poisson
@@ -192,6 +209,9 @@ plt.xlabel('x (demand)')
 plt.show()
 ```
 ![](https://i.imgur.com/1BuH6tk.png)
+
+
+
 ```
 i = np.arange(0.01, 1, 0.01)
 plt.plot(i, poisson.isf(1-i, mu)) # cdf modified from isf, for some reason, there is no inverse CDF, but inverse survival function
@@ -199,6 +219,9 @@ plt.title('Inverse CDF')
 plt.show()
 ```
 ![](https://i.imgur.com/ooJdvsh.png)
+
+
+With the cummulative density distribution, I can use its inverse function to map cummulative failure rate back to number of parts that failures migth happen - which is equivalent to the number of spares we would like prepare when a failure happens. 
 
 
 ## (Bonus) Spares Demand Forecast using Newsvendor Model
@@ -225,6 +248,7 @@ for sla in SLAs:
     print('{:<30}{:<40}'.format(sla, poisson.isf(1-sla, mu)))
 ```
 ![](https://i.imgur.com/ypUvju4.png)
+
 This simplified model (constant failure rate = 0.0003 per day / AFR = 203 per year) fitted in poisson distribution recommends 237 spares in a year to achieve 99% reliability or when ${C_u\over C_u+C_o} = 0.99$.
 
 
